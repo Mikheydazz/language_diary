@@ -1,0 +1,2109 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0e1117">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Языковой дневник</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Дневник">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="manifest" href="manifest.json">
+<link id="appleIcon" rel="apple-touch-icon">
+<style>
+:root{
+  --bg:#0e1117; --panel:#151a23; --panel-2:#1b2230; --line:#28313f;
+  --text:#e7ecf3; --muted:#8b98ac; --accent:#7c6cf5; --accent-soft:rgba(124,108,245,.15);
+  --green:#22c55e; --red:#ef4444; --radius:14px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  background:var(--bg); color:var(--text); display:flex; flex-direction:column; height:100dvh;
+  font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,Arial,sans-serif;
+  overscroll-behavior:none; -webkit-tap-highlight-color:transparent;
+}
+button{font:inherit;cursor:pointer;color:inherit}
+input,textarea,select{font:inherit;color:inherit}
+.hidden{display:none !important}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+
+/* ---------- topbar ---------- */
+.topbar{
+  flex:none; display:flex; align-items:center; gap:8px; padding:8px 12px;
+  padding-top:calc(8px + env(safe-area-inset-top));
+  background:rgba(14,17,23,.92); backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--line); position:relative; z-index:60;
+}
+.brand{font-weight:700; letter-spacing:.2px; font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.spacer{flex:1}
+
+/* ---------- layout ---------- */
+.app{flex:1; display:flex; min-height:0}
+.sidebar{
+  flex:none; width:280px; overflow:auto; border-right:1px solid var(--line);
+  padding:14px; display:flex; flex-direction:column; gap:10px;
+}
+.content{flex:1; overflow:auto; -webkit-overflow-scrolling:touch; padding:16px; padding-bottom:calc(60px + env(safe-area-inset-bottom))}
+@media(max-width:880px){
+  .sidebar{display:none}
+  .content{padding:12px; padding-bottom:calc(110px + env(safe-area-inset-bottom))}
+}
+
+/* ---------- buttons ---------- */
+.btn{
+  border:1px solid var(--line); background:var(--panel-2); border-radius:11px;
+  padding:10px 14px; font-weight:600; font-size:15px; transition:.15s;
+}
+.btn:active{transform:scale(.98)}
+.btn.primary{background:var(--accent); border-color:transparent; color:#fff}
+.btn.ghost{background:transparent}
+.btn.sm{padding:7px 11px; font-size:14px; border-radius:9px}
+.btn.wide{width:100%}
+.btn.danger{color:var(--red); border-color:rgba(239,68,68,.35)}
+.icon-btn{
+  border:none; background:transparent; color:var(--muted); width:34px; height:34px; border-radius:9px;
+  display:inline-flex; align-items:center; justify-content:center; font-size:16px;
+}
+.icon-btn:hover{background:var(--panel-2); color:var(--text)}
+.icon-btn.danger:hover{color:var(--red); background:rgba(239,68,68,.12)}
+
+/* ---------- page ---------- */
+.page{max-width:860px; margin:0 auto; display:flex; flex-direction:column; gap:14px}
+.page-head{display:flex; flex-direction:column; gap:10px}
+h1{font-size:23px; margin:0}
+h3{margin:0; font-size:17px}
+.crumbs{font-size:13px; color:var(--muted); display:flex; gap:4px; flex-wrap:wrap; align-items:center}
+.link{color:var(--accent); text-decoration:none; cursor:pointer}
+.empty{
+  padding:22px; text-align:center; color:var(--muted); border:1px dashed var(--line);
+  border-radius:var(--radius); font-size:14px;
+}
+.document .empty{border:none; background:transparent; padding:32px 16px}
+
+/* ---------- cards (home/module) ---------- */
+.grid{display:grid; gap:12px; grid-template-columns:1fr}
+@media(min-width:700px){.grid{grid-template-columns:1fr 1fr}}
+.card{
+  background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+  padding:14px; display:flex; flex-direction:column; gap:8px; cursor:pointer; transition:.15s;
+}
+.card:active{transform:scale(.995)}
+.card:hover{border-color:#3a465b}
+.card-top{display:flex; align-items:center; justify-content:space-between}
+.badge{
+  font-size:11px; font-weight:700; letter-spacing:.6px; text-transform:uppercase;
+  padding:4px 8px; border-radius:7px; background:var(--accent-soft); color:#b3a8ff;
+}
+
+/* ---------- inputs (common) ---------- */
+.input{
+  width:100%; background:var(--panel-2); border:1px solid var(--line); border-radius:10px;
+  padding:10px 12px; outline:none; font-size:16px; transition:.15s;
+}
+.input:focus{border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft)}
+.title-input{font-size:20px; font-weight:700; background:transparent; border-color:transparent; padding:6px 8px}
+.title-input:focus{background:var(--panel-2)}
+.row{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+.form{display:flex; flex-direction:column; gap:12px}
+.field{display:flex; flex-direction:column; gap:5px}
+.field label{font-size:13px; color:var(--muted); font-weight:600}
+
+/* ---------- lessons ---------- */
+.lesson-row{
+  display:flex; align-items:center; gap:12px; background:var(--panel); border:1px solid var(--line);
+  border-radius:var(--radius); padding:12px 14px; cursor:pointer; transition:.15s;
+}
+.lesson-row:hover{border-color:#3a465b}
+.letter{
+  flex:none; width:34px; height:34px; border-radius:10px; background:var(--accent-soft); color:#b3a8ff;
+  display:flex; align-items:center; justify-content:center; font-weight:800; font-size:15px;
+}
+.letter.big{width:44px; height:44px; font-size:19px; border-radius:12px}
+.lesson-main{flex:1; min-width:0}
+.lesson-title{font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+
+/* ======================================================
+   LESSON — редактор документа
+   ====================================================== */
+.document{
+  background:rgba(21,26,35,.55);
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:4px;
+  display:flex;
+  flex-direction:column;
+  transition:border-color .2s, box-shadow .2s;
+}
+@media(min-width:700px){ .document{padding:10px} }
+body.dragging-file .document{
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px var(--accent-soft);
+}
+
+.doc-block{
+  position:relative;
+  padding:12px 10px;
+  border-radius:12px;
+  transition:background .15s;
+}
+.doc-block:hover{ background:rgba(255,255,255,.022) }
+.doc-block + .doc-block::before{
+  content:''; position:absolute; top:0; left:10px; right:10px; height:1px;
+  background:var(--line); opacity:.55;
+}
+
+.block-head{
+  display:flex; align-items:center; gap:6px; margin-bottom:2px;
+}
+.block-tag{
+  flex:none; width:22px; height:22px; border-radius:6px;
+  display:inline-flex; align-items:center; justify-content:center;
+  font-size:11px; font-weight:800; background:rgba(124,108,245,.18); color:#b3a8ff;
+}
+.block-tag.type-grammar{background:rgba(34,197,94,.16); color:#7ee2a5}
+.block-tag.type-custom{background:rgba(250,204,21,.14); color:#e8c65a}
+
+.block-title-input{
+  flex:1; min-width:0; background:transparent; border:none; outline:none;
+  padding:4px 6px; font-size:16px; font-weight:600; color:var(--text); border-radius:6px;
+}
+.block-title-input:focus{ background:rgba(255,255,255,.03) }
+.block-title-input::placeholder{ color:var(--muted); font-weight:500 }
+
+.block-menu-btn{
+  flex:none; width:28px; height:28px; border:none; background:transparent; color:var(--muted);
+  border-radius:6px; font-size:15px; opacity:0; transition:opacity .15s;
+}
+.doc-block:hover .block-menu-btn,
+.block-menu-btn:focus-visible{ opacity:1 }
+@media(hover:none){ .block-menu-btn{ opacity:.55 } }
+
+/* ---------- ТУЛБАР ФОРМАТИРОВАНИЯ ---------- */
+.block-toolbar{
+  display:none;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:1px;
+  padding:3px 4px;
+  margin-bottom:4px;
+  background:rgba(27,34,48,.7);
+  border:1px solid var(--line);
+  border-radius:8px;
+  user-select:none;
+  -webkit-user-select:none;
+}
+.doc-block.is-focused .block-toolbar,
+.doc-block:hover .block-toolbar{ display:flex; }
+@media (hover: none){
+  .doc-block:not(.is-focused) .block-toolbar{ display:none; }
+}
+
+.tb-btn{
+  border:none; background:transparent; color:var(--text);
+  width:28px; height:28px; padding:0; border-radius:6px;
+  display:inline-flex; align-items:center; justify-content:center;
+  transition:background .12s;
+}
+.tb-btn:hover{ background:rgba(255,255,255,.08); }
+.tb-btn:active{ background:rgba(124,108,245,.25); }
+.tb-btn b,.tb-btn i,.tb-btn u,.tb-btn s{font-size:14px}
+
+.tb-sep{
+  width:1px; height:18px; background:var(--line);
+  margin:0 4px; flex:none;
+}
+
+.tb-color{
+  width:18px; height:18px; border-radius:50%;
+  border:2px solid rgba(255,255,255,.15);
+  padding:0; cursor:pointer; flex:none;
+  transition:transform .12s, border-color .12s;
+}
+.tb-color:hover{ transform:scale(1.18); border-color:rgba(255,255,255,.4); }
+
+.tb-select{
+  background:var(--panel); border:1px solid var(--line);
+  border-radius:6px; color:var(--text);
+  padding:3px 6px; font-size:12px; outline:none;
+  max-width:92px; flex:none;
+}
+.tb-select:focus{ border-color:var(--accent); }
+
+/* ---------- РЕДАКТОР (contenteditable) ---------- */
+.block-editor{
+  width:100%;
+  min-height:60px;
+  padding:6px 8px;
+  font-size:15px;
+  line-height:1.6;
+  color:var(--text);
+  outline:none;
+  border-radius:6px;
+  transition:background .12s;
+  word-wrap:break-word;
+  overflow-wrap:break-word;
+  white-space:pre-wrap;
+}
+.block-editor:focus{ background:rgba(255,255,255,.025); }
+.block-editor.is-empty:not(:focus)::before{
+  content:attr(data-placeholder);
+  color:var(--muted);
+  pointer-events:none;
+  position:absolute;
+}
+.block-editor b, .block-editor strong{ font-weight:700; }
+.block-editor i, .block-editor em{ font-style:italic; }
+.block-editor u{ text-decoration:underline; }
+.block-editor s, .block-editor strike{ text-decoration:line-through; }
+
+/* ---------- словарь ---------- */
+.vocab-list{ display:flex; flex-direction:column; padding:2px 0 }
+.vocab-row{
+  display:grid; gap:4px; align-items:start;
+  grid-template-columns:1fr 1.2fr 1fr 26px;
+  padding:2px 0; border-radius:6px;
+  transition:background .12s;
+}
+.vocab-row:hover{ background:rgba(255,255,255,.02) }
+.vocab-input{
+  min-width:0; background:transparent; border:none; border-bottom:1px solid transparent;
+  outline:none; padding:6px 8px; font-size:15px; color:var(--text);
+  transition:border-color .15s;
+}
+.vocab-input:focus{ border-bottom-color:var(--accent) }
+.vocab-input::placeholder{ color:var(--muted) }
+textarea.vocab-input{
+  resize:none;
+  overflow:hidden;
+  line-height:1.4;
+  min-height:32px;
+  display:block;
+  font-family:inherit;
+  white-space:pre-wrap;
+  word-break:break-word;
+}
+.vocab-term{ font-weight:600 }
+.vocab-note{ font-style:italic; color:#c9d1de }
+.vocab-remove{
+  border:none; background:transparent; color:var(--muted);
+  padding:4px; border-radius:5px; font-size:12px; opacity:0; transition:.15s;
+  margin-top:6px;
+}
+.vocab-row:hover .vocab-remove{ opacity:1 }
+.vocab-remove:hover{ color:var(--red); background:rgba(239,68,68,.12) }
+@media(hover:none){ .vocab-remove{ opacity:.5 } }
+
+@media(max-width:700px){
+  .vocab-row{
+    grid-template-columns:1fr 24px;
+    grid-template-areas:"term remove" "def remove" "note remove";
+    gap:0; padding:8px 6px; border-bottom:1px solid rgba(40,49,63,.5);
+  }
+  .vocab-term{ grid-area:term }
+  .vocab-def{ grid-area:def; font-size:14px; padding:4px 8px }
+  .vocab-note{ grid-area:note; font-size:13px; padding:4px 8px }
+  .vocab-remove{ grid-area:remove; align-self:start; margin-top:8px }
+}
+
+.add-inline{
+  align-self:flex-start; background:transparent; border:none; color:var(--muted);
+  padding:6px 8px; border-radius:6px; font-size:13.5px; transition:.15s;
+}
+.add-inline:hover{ color:var(--accent); background:rgba(124,108,245,.08) }
+
+/* ---------- блок изображения ---------- */
+.doc-block[data-type="image"]{ padding:10px 6px; }
+.image-block-wrap{ display:flex; flex-direction:column; gap:4px; position:relative; }
+.image-media{
+  display:block; max-width:100%; height:auto; border-radius:10px;
+  cursor:zoom-in; background:#0a0d12;
+  transition:max-width .2s, margin .2s;
+}
+.image-media.size-small  { max-width:240px; }
+.image-media.size-medium { max-width:420px; }
+.image-media.size-large  { max-width:640px; }
+.image-media.size-full   { max-width:100%; width:100%; }
+.image-media.align-left   { margin-left:0;   margin-right:auto; }
+.image-media.align-center { margin-left:auto; margin-right:auto; }
+.image-media.align-right  { margin-left:auto; margin-right:0; }
+
+.image-controls{
+  position:absolute; top:8px; right:8px;
+  display:flex; align-items:center; gap:1px; padding:4px;
+  background:rgba(14,17,23,.86); border:1px solid var(--line);
+  border-radius:10px; backdrop-filter:blur(8px);
+  opacity:0; transition:opacity .15s; z-index:5;
+  box-shadow:0 6px 20px rgba(0,0,0,.35);
+}
+.image-block-wrap:hover .image-controls,
+.image-controls:focus-within { opacity:1 }
+@media(hover:none){ .image-controls{ opacity:.85; } }
+
+.image-ctrl{
+  border:none; background:transparent; color:var(--text);
+  min-width:28px; height:28px; padding:0 7px; border-radius:7px;
+  font-size:13px; font-weight:600;
+  display:inline-flex; align-items:center; justify-content:center;
+  transition:background .12s, color .12s;
+}
+.image-ctrl:hover{ background:rgba(255,255,255,.08) }
+.image-ctrl.active{ background:var(--accent); color:#fff }
+.image-ctrl.danger:hover{ background:rgba(239,68,68,.16); color:var(--red) }
+.image-ctrl-sep{ width:1px; height:16px; background:var(--line); margin:0 3px; flex:none; }
+
+.image-caption-input{
+  width:100%; background:transparent; border:none; outline:none;
+  text-align:center; font-size:13.5px; color:var(--muted);
+  font-style:italic; padding:4px 8px; border-radius:6px;
+  transition:background .12s;
+}
+.image-caption-input:focus{ color:var(--text); background:rgba(255,255,255,.035); }
+.image-caption-input::placeholder{ color:rgba(139,152,172,.55) }
+
+.image-empty-placeholder{
+  display:flex; align-items:center; justify-content:center;
+  min-height:110px; border:2px dashed var(--line); border-radius:10px;
+  color:var(--muted); font-size:14px; margin:4px 0;
+  cursor:pointer; transition:border-color .15s, color .15s;
+}
+.image-empty-placeholder:hover{ border-color:var(--accent); color:var(--accent); }
+
+/* ---------- добавление блоков ---------- */
+.add-block-row{
+  display:flex; flex-wrap:wrap; gap:2px; padding:10px 10px 6px;
+  border-top:1px dashed rgba(40,49,63,.7); margin-top:4px;
+}
+.add-block-btn{
+  background:transparent; border:none; color:var(--muted);
+  padding:8px 12px; border-radius:8px; font-size:13.5px; font-weight:600;
+  transition:.15s;
+}
+.add-block-btn:hover{ color:var(--accent); background:rgba(124,108,245,.1) }
+
+.doc-footer{
+  display:flex; gap:8px; justify-content:center; flex-wrap:wrap;
+  color:var(--muted); font-size:12px; padding:6px 4px 0;
+}
+
+/* ---------- popover ---------- */
+.block-popover{
+  position:fixed; z-index:90; min-width:210px;
+  background:var(--panel-2); border:1px solid var(--line); border-radius:10px;
+  padding:4px; box-shadow:0 14px 34px rgba(0,0,0,.55);
+  animation:popoverIn .12s ease;
+}
+@keyframes popoverIn{from{opacity:0; transform:translateY(-4px)}to{opacity:1; transform:translateY(0)}}
+.pop-item{
+  display:block; width:100%; text-align:left;
+  background:transparent; border:none; color:var(--text);
+  padding:9px 12px; border-radius:6px; font-size:14px; transition:.1s;
+}
+.pop-item:hover{ background:rgba(255,255,255,.05) }
+.pop-item.danger{ color:#ffb4b4 }
+.pop-item.danger:hover{ background:rgba(239,68,68,.12); color:var(--red) }
+.pop-sep{ height:1px; background:var(--line); margin:4px 8px }
+
+/* ---------- chip ---------- */
+.chip{
+  position:fixed; left:50%; transform:translateX(-50%); bottom:calc(18px + env(safe-area-inset-bottom));
+  z-index:80; background:var(--accent); color:#fff; border:none; padding:12px 24px; border-radius:999px;
+  font-weight:700; font-size:15px; box-shadow:0 10px 34px rgba(124,108,245,.55);
+  animation:pop .16s ease;
+}
+@keyframes pop{from{opacity:0; transform:translate(-50%,14px)} to{opacity:1; transform:translate(-50%,0)}}
+
+/* ---------- sheet ---------- */
+.sheet{
+  position:fixed; top:0; left:0; right:0;
+  height:100vh; height:100dvh;
+  z-index:95; background:rgba(0,0,0,.55);
+  display:flex; align-items:flex-end; justify-content:center;
+  padding-top:env(safe-area-inset-top);
+}
+.sheet-box{
+  width:100%; max-width:620px; background:var(--panel); border:1px solid var(--line);
+  border-radius:18px 18px 0 0; max-height:100%; display:flex; flex-direction:column;
+  padding-bottom:env(safe-area-inset-bottom);
+  overflow:hidden;
+}
+@media(min-width:881px){
+  .sheet{ align-items:center; padding:16px; }
+  .sheet-box{ border-radius:18px; max-height:90vh; max-height:90dvh; padding-bottom:0; }
+}
+.sheet-head{display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid var(--line)}
+.sheet-body{
+  padding:14px 16px;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;
+  display:flex; flex-direction:column; gap:12px;
+  flex:1 1 auto;
+  min-height:0;
+}
+.ai-sel{
+  font-size:14px; color:var(--muted); font-style:italic; background:var(--panel-2);
+  border-left:3px solid var(--accent); border-radius:8px; padding:8px 10px; max-height:110px; overflow:auto;
+}
+.ai-answer{
+  white-space:pre-wrap;
+  word-break:break-word;
+  overflow-wrap:anywhere;
+  font-size:15px; line-height:1.6; background:var(--panel-2);
+  border:1px solid var(--line); border-radius:11px; padding:12px; min-height:70px;
+}
+.loader{display:inline-block; width:14px; height:14px; border:2px solid var(--accent); border-top-color:transparent; border-radius:50%; animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ---------- modal ---------- */
+.modal{position:fixed; inset:0; z-index:100; display:flex; align-items:center; justify-content:center; padding:16px}
+.modal-backdrop{position:absolute; inset:0; background:rgba(0,0,0,.6)}
+.modal-box{
+  position:relative; width:100%; max-width:560px; background:var(--panel); border:1px solid var(--line);
+  border-radius:16px; display:flex; flex-direction:column; max-height:86dvh;
+}
+.modal-head{display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid var(--line)}
+.modal-body{padding:16px; overflow:auto; display:flex; flex-direction:column; gap:12px}
+.modal-actions{display:flex; gap:8px; justify-content:flex-end; padding:12px 16px; border-top:1px solid var(--line); flex-wrap:wrap}
+pre.md{
+  background:var(--panel-2); border:1px solid var(--line); border-radius:11px; padding:12px;
+  white-space:pre-wrap; word-break:break-word; font-size:13px; line-height:1.5; max-height:45dvh; overflow:auto; margin:0;
+}
+/* ---------- theme selector (в обзоре модуля) ---------- */
+.theme-selector{
+  display:flex; flex-direction:column; gap:8px;
+  padding:10px 0 14px;
+  border-bottom:1px solid var(--line);
+}
+.theme-selector-label{
+  font-size:11px; font-weight:700; letter-spacing:.8px;
+  text-transform:uppercase; color:var(--muted);
+}
+.theme-buttons{
+  display:grid; grid-template-columns:repeat(3,1fr); gap:6px;
+}
+.theme-btn{
+  display:flex; flex-direction:column; align-items:center; gap:4px;
+  padding:10px 6px; background:var(--panel-2);
+  border:2px solid var(--line); border-radius:10px;
+  color:var(--text); font-size:12px; font-weight:600;
+  transition:.15s; cursor:pointer;
+}
+.theme-btn:hover{ border-color:#3a465b; }
+.theme-btn.active{
+  border-color:var(--accent);
+  background:var(--accent-soft);
+  color:#b3a8ff;
+}
+.theme-btn-icon{ font-size:20px; line-height:1; }
+.theme-btn-label{ font-size:12px; }
+.lightbox{position:fixed; inset:0; z-index:110; background:rgba(0,0,0,.92); display:flex; align-items:center; justify-content:center; padding:12px}
+.lightbox img{max-width:100%; max-height:100%; border-radius:8px}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <button class="icon-btn hidden" id="btnBack" title="Назад">←</button>
+  <div class="brand">Языковой дневник</div>
+  <div class="spacer"></div>
+  <button class="btn sm primary hidden" id="btnInstall">Установить</button>
+  <button class="icon-btn" id="btnSettings" title="Настройки">⚙</button>
+</header>
+
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <main class="content" id="content"></main>
+</div>
+
+<button class="chip hidden" id="chip">Объясни</button>
+
+<div class="sheet hidden" id="aiSheet">
+  <div class="sheet-box">
+    <div class="sheet-head">
+      <strong>ИИ-помощник</strong>
+      <button class="icon-btn" id="aiClose">✕</button>
+    </div>
+    <div class="sheet-body">
+      <div class="ai-sel hidden" id="aiSel"></div>
+      <div class="row">
+        <button class="btn primary" id="aiExplain">Объясни</button>
+        <button class="btn" id="aiTranslate">Перевод</button>
+      </div>
+      <div class="ai-answer" id="aiAnswer">Выделите текст в уроке и нажмите «Объясни».</div>
+      <div class="row">
+        <input class="input" id="aiAsk" placeholder="Свой вопрос…" style="flex:1;min-width:150px">
+        <button class="btn" id="aiSend">→</button>
+      </div>
+      <div class="muted small" id="aiModelInfo"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal hidden" id="modal"></div>
+
+<script>
+/* ============ Утилиты ============ */
+const $ = s => document.querySelector(s);
+const uid = () => Math.random().toString(36).slice(2, 9);
+
+function el(tag, attrs = {}, ...kids) {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v === null || v === undefined || v === false) continue;
+    if (k === 'class') n.className = v;
+    else if (k === 'text') n.textContent = v;
+    else if (k === 'html') n.innerHTML = v;
+    else if (k.startsWith('on') && typeof v === 'function') n.addEventListener(k.slice(2).toLowerCase(), v);
+    else n.setAttribute(k, v);
+  }
+  for (const kid of kids.flat()) {
+    if (kid === null || kid === undefined || kid === false) continue;
+    n.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
+  }
+  return n;
+}
+function toast(msg) {
+  const t = el('div', {
+    style: 'position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom));' +
+           'background:#232c3b;border:1px solid #38455a;color:#e7ecf3;padding:10px 16px;border-radius:11px;' +
+           'z-index:200;font-size:14px;max-width:90vw;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.4)',
+    text: msg
+  });
+  document.body.append(t);
+  setTimeout(() => t.remove(), 2600);
+}
+
+/* ============ Состояние ============ */
+const LS_KEY = 'langDiary.v1';
+const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+function defaultState() {
+  return { modules: [], settings: { baseUrl: 'https://api.openai.com/v1', apiKey: '', model: 'gpt-4o-mini' } };
+}
+let state;
+try { state = JSON.parse(localStorage.getItem(LS_KEY)) || defaultState(); } catch { state = defaultState(); }
+state.settings = Object.assign(defaultState().settings, state.settings || {});
+state.modules = Array.isArray(state.modules) ? state.modules : [];
+
+let saveTimer;
+function save() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    try { localStorage.setItem(LS_KEY, JSON.stringify(state)); }
+    catch (e) {
+      toast(e.name === 'QuotaExceededError'
+        ? 'Мало места в браузере. Удалите часть изображений.'
+        : 'Ошибка сохранения');
+    }
+  }, 250);
+}
+const findModule = id => state.modules.find(m => m.id === id);
+function findLesson() {
+  const m = findModule(nav.moduleId);
+  const l = m && m.lessons.find(x => x.id === nav.lessonId);
+  return { m, l };
+}
+
+/* ============ Навигация ============ */
+const nav = { view: 'home', moduleId: null, lessonId: null };
+const content = $('#content');
+const sidebar = $('#sidebar');
+const btnBack = $('#btnBack');
+
+function go(view, moduleId = null, lessonId = null) {
+  nav.view = view; nav.moduleId = moduleId; nav.lessonId = lessonId;
+  hideChip(); closeBlockPopover();
+  render({ top: true });
+}
+function render(opts = {}) {
+  const scroll = content.scrollTop;
+  renderTopbar(); renderSidebar(); content.innerHTML = '';
+  if (nav.view === 'home') content.append(viewHome());
+  else if (nav.view === 'module') {
+    const m = findModule(nav.moduleId);
+    if (!m) return go('home');
+    content.append(viewModule(m));
+  } else {
+    const { m, l } = findLesson();
+    if (!m || !l) return go('home');
+    content.append(viewLesson(m, l));
+  }
+  content.scrollTop = opts.top ? 0 : scroll;
+}
+function renderTopbar() {
+  btnBack.classList.toggle('hidden', nav.view === 'home');
+  btnBack.onclick = () => {
+    if (nav.view === 'lesson') go('module', nav.moduleId);
+    else go('home');
+  };
+}
+function renderSidebar() {
+  sidebar.innerHTML = '';
+  sidebar.append(el('div', { class: 'muted small', style: 'font-weight:700;letter-spacing:.6px', text: 'МОДУЛИ' }));
+  sidebar.append(el('button', { class: 'btn primary sm', text: '+ Новый модуль', onclick: addModule }));
+  const list = el('div', { style: 'display:flex;flex-direction:column;gap:4px' });
+  state.modules.forEach((m, i) => {
+    const active = nav.moduleId === m.id;
+    const row = el('div', {
+      style: `padding:9px 10px;border-radius:9px;cursor:pointer;font-size:14px;font-weight:600;` +
+             (active ? 'background:var(--accent-soft);color:#b3a8ff' : 'color:var(--muted)'),
+      text: (i + 1) + '. ' + (m.title || 'Без названия')
+    });
+    row.onclick = () => go('module', m.id);
+    list.append(row);
+    if (active && m.lessons.length) {
+      const sub = el('div', { style: 'display:flex;flex-direction:column;gap:2px;margin:2px 0 6px 10px' });
+      m.lessons.forEach(l => {
+        const isActive = nav.lessonId === l.id;
+        const r = el('div', {
+          style: `padding:6px 10px;border-radius:8px;cursor:pointer;font-size:13px;` +
+                 (isActive ? 'background:var(--panel-2);color:var(--text)' : 'color:var(--muted)'),
+          text: l.letter + (l.title ? ' · ' + l.title : '')
+        });
+        r.onclick = () => go('lesson', m.id, l.id);
+        sub.append(r);
+      });
+      list.append(sub);
+    }
+  });
+  sidebar.append(list);
+}
+
+/* ============ Главный экран ============ */
+function addModule() {
+  const m = { id: uid(), title: 'Модуль ' + (state.modules.length + 1), lessons: [] };
+  state.modules.push(m); save(); go('module', m.id);
+}
+function viewHome() {
+  const wrap = el('div', { class: 'page' });
+  wrap.append(el('div', { class: 'page-head' },
+    el('h1', { text: 'Мои модули' }),
+    el('div', { class: 'muted small', text: 'Дневник изучения языка с ИИ-помощником' })
+  ));
+  const grid = el('div', { class: 'grid' });
+  if (!state.modules.length) grid.append(el('div', { class: 'empty', text: 'Пока пусто. Создайте первый модуль — он появится здесь.' }));
+  state.modules.forEach((m, i) => {
+    const card = el('div', { class: 'card' },
+      el('div', { class: 'card-top' },
+        el('span', { class: 'badge', text: 'Модуль ' + (i + 1) }),
+        el('button', { class: 'icon-btn', text: '⋯', title: 'Действия',
+          onclick: e => { e.stopPropagation(); moduleMenu(m); } })
+      ),
+      el('h3', { text: m.title || 'Без названия' }),
+      el('div', { class: 'muted small',
+        text: m.lessons.length ? 'Уроки: ' + m.lessons.map(l => l.letter).join(' · ') : 'Нет уроков' })
+    );
+    card.onclick = () => go('module', m.id);
+    grid.append(card);
+  });
+  wrap.append(grid);
+  wrap.append(el('button', { class: 'btn primary wide', text: '+ Новый модуль', onclick: addModule }));
+  return wrap;
+}
+function moduleMenu(m) {
+  openModal('Модуль', el('div', { class: 'muted', text: m.title }), [
+    el('button', { class: 'btn', text: 'Переименовать', onclick: () => promptText('Название модуля', m.title, v => {
+      if (!v) return; m.title = v; save(); render();
+    }) }),
+    el('button', { class: 'btn primary', text: 'Обзор по модулю', onclick: () => { closeModal(); openOverview(m); } }),
+    el('button', { class: 'btn danger', text: 'Удалить', onclick: () => {
+      if (!confirm('Удалить модуль «' + m.title + '» со всеми уроками?')) return;
+      state.modules = state.modules.filter(x => x.id !== m.id);
+      save(); closeModal(); go('home');
+    } })
+  ]);
+}
+
+/* ============ Модуль ============ */
+function addLesson(m) {
+  const idx = m.lessons.length;
+  m.lessons.push({ id: uid(), letter: LETTERS[idx] || String(idx + 1), title: '', blocks: [] });
+  save();
+}
+function lessonSummary(l) {
+  let words = 0, grammar = 0, images = 0, notes = 0;
+  l.blocks.forEach(b => {
+    if (b.type === 'vocab') words += (b.items || []).length;
+    else if (b.type === 'grammar') grammar++;
+    else if (b.type === 'image') { if (b.images && b.images.length) images++; }
+    else notes++;
+  });
+  const parts = [];
+  if (words) parts.push(words + ' слов');
+  if (grammar) parts.push(grammar + ' грам.');
+  if (images) parts.push('🖼 ' + images);
+  if (notes) parts.push(notes + ' заметок');
+  return parts.length ? parts.join(' · ') : 'Пусто';
+}
+function viewModule(m) {
+  const wrap = el('div', { class: 'page' });
+  const titleInput = el('input', { class: 'input title-input', value: m.title || '', placeholder: 'Название модуля' });
+  titleInput.oninput = () => { m.title = titleInput.value; save(); renderSidebar(); };
+  wrap.append(el('div', { class: 'page-head' },
+    el('div', { class: 'crumbs' },
+      el('a', { class: 'link', text: 'Модули', onclick: () => go('home') }),
+      el('span', { text: '/' })
+    ),
+    titleInput,
+    el('div', { class: 'row' },
+      el('button', { class: 'btn primary sm', text: '📄 Составить обзор по модулю', onclick: () => openOverview(m) })
+    )
+  ));
+  const list = el('div', { style: 'display:flex;flex-direction:column;gap:10px' });
+  if (!m.lessons.length) list.append(el('div', { class: 'empty', text: 'В модуле пока нет уроков.' }));
+  m.lessons.forEach(l => {
+    const row = el('div', { class: 'lesson-row' },
+      el('span', { class: 'letter', text: l.letter }),
+      el('div', { class: 'lesson-main' },
+        el('div', { class: 'lesson-title', text: l.title || 'Без названия' }),
+        el('div', { class: 'muted small', text: lessonSummary(l) })
+      ),
+      el('button', { class: 'icon-btn', text: '⋯', onclick: e => {
+        e.stopPropagation();
+        openModal('Урок ' + l.letter, el('div', { class: 'muted', text: l.title || 'Без названия' }), [
+          el('button', { class: 'btn', text: 'Переименовать', onclick: () => promptText('Название урока', l.title || '', v => {
+            l.title = v; save(); render(); closeModal();
+          }) }),
+          el('button', { class: 'btn danger', text: 'Удалить урок', onclick: () => {
+            if (!confirm('Удалить урок ' + l.letter + '?')) return;
+            m.lessons = m.lessons.filter(x => x.id !== l.id);
+            save(); closeModal(); render();
+          } })
+        ]);
+      } })
+    );
+    row.onclick = () => go('lesson', m.id, l.id);
+    list.append(row);
+  });
+  wrap.append(list);
+  wrap.append(el('div', { class: 'add-row' },
+    el('button', { class: 'btn', text: '+ Добавить урок', onclick: () => { addLesson(m); render(); } })
+  ));
+  return wrap;
+}
+
+/* ============ Блоки ============ */
+function newBlock(type) {
+  const base = { id: uid(), type, text: '', html: '' };
+  if (type === 'vocab') return { ...base, title: 'Vocabulary', items: [{ id: uid(), term: '', def: '', note: '' }] };
+  if (type === 'grammar') return { ...base, title: 'Grammar', items: [] };
+  return { ...base, title: 'Свой блок', items: [] };
+}
+function newImageBlock(img) {
+  let image = null;
+  if (img) image = typeof img === 'string' ? { id: uid(), src: img } : { id: img.id || uid(), src: img.src };
+  return {
+    id: uid(), type: 'image', title: 'Изображение', text: '',
+    images: image ? [image] : [],
+    size: 'medium', align: 'center'
+  };
+}
+const typeLabel = t => t === 'vocab' ? 'Vocabulary' : t === 'grammar' ? 'Grammar' : t === 'image' ? 'Изображение' : 'Свой блок';
+
+function migrateImages(l) {
+  if (!l.blocks) return;
+  let changed = false;
+  const out = [];
+  for (const b of l.blocks) {
+    if (b.type === 'image') {
+      if (!Array.isArray(b.images)) b.images = [];
+      if (!b.size) b.size = 'medium';
+      if (!b.align) b.align = 'center';
+      out.push(b);
+    } else if (Array.isArray(b.images) && b.images.length) {
+      const rest = { ...b, images: [] };
+      out.push(rest);
+      for (const img of b.images) out.push(newImageBlock(img));
+      changed = true;
+    } else {
+      out.push(b);
+    }
+  }
+  if (changed) { l.blocks = out; save(); }
+}
+
+function lessonStats(l) {
+  let words = 0, images = 0, blocks = 0;
+  l.blocks.forEach(b => {
+    if (b.type === 'image') { if (b.images && b.images.length) images++; return; }
+    blocks++;
+    if (Array.isArray(b.items)) words += b.items.filter(it => it.term || it.def).length;
+  });
+  return { words, blocks, images };
+}
+
+function viewLesson(m, l) {
+  migrateImages(l);
+
+  const wrap = el('div', { class: 'page' });
+
+  const titleInput = el('input', { class: 'input title-input', value: l.title || '', placeholder: 'Название урока' });
+  titleInput.oninput = () => { l.title = titleInput.value; save(); renderSidebar(); };
+
+  wrap.append(el('div', { class: 'page-head' },
+    el('div', { class: 'crumbs' },
+      el('a', { class: 'link', text: 'Модули', onclick: () => go('home') }),
+      el('span', { text: '/' }),
+      el('a', { class: 'link', text: m.title, onclick: () => go('module', m.id) }),
+      el('span', { text: '/' }),
+      el('span', { text: 'Урок ' + l.letter })
+    ),
+    el('div', { class: 'row' },
+      el('span', { class: 'letter big', text: l.letter }),
+      el('div', { style: 'flex:1;min-width:160px' }, titleInput)
+    )
+  ));
+
+  const doc = el('div', { class: 'document' });
+  if (!l.blocks.length) {
+    doc.append(el('div', { class: 'empty', text: 'Пока пусто. Добавьте блок снизу или перетащите картинку сюда.' }));
+  }
+  l.blocks.forEach((b, i) => doc.append(blockCard(l, b, i)));
+
+  doc.append(el('div', { class: 'add-block-row' },
+    el('button', { class: 'add-block-btn', text: '+ Vocabulary', onclick: () => { l.blocks.push(newBlock('vocab')); save(); render(); } }),
+    el('button', { class: 'add-block-btn', text: '+ Grammar', onclick: () => { l.blocks.push(newBlock('grammar')); save(); render(); } }),
+    el('button', { class: 'add-block-btn', text: '+ Изображение', onclick: () => pickImageAtEnd(l) }),
+    el('button', { class: 'add-block-btn', text: '+ Свой блок', onclick: () => { l.blocks.push(newBlock('custom')); save(); render(); } })
+  ));
+  wrap.append(doc);
+
+  const s = lessonStats(l);
+  const stats = [];
+  stats.push(s.words + ' ' + wordEnd(s.words, ['слово', 'слова', 'слов']));
+  stats.push(s.blocks + ' ' + wordEnd(s.blocks, ['блок', 'блока', 'блоков']));
+  if (s.images) stats.push(s.images + ' ' + wordEnd(s.images, ['изображение', 'изображения', 'изображений']));
+  wrap.append(el('div', { class: 'doc-footer' }, stats.join(' · ')));
+
+  return wrap;
+}
+
+function wordEnd(n, forms) {
+  const a = Math.abs(n) % 100, b = a % 10;
+  if (a > 10 && a < 20) return forms[2];
+  if (b === 1) return forms[0];
+  if (b >= 2 && b <= 4) return forms[1];
+  return forms[2];
+}
+
+/* ============ Форматирование ============ */
+function applyCmd(editor, cmd) {
+  editor.focus();
+  try { document.execCommand('styleWithCSS', false, false); } catch {}
+  document.execCommand(cmd, false, null);
+  editor.dispatchEvent(new Event('input', { bubbles: true }));
+}
+function wrapSelectionStyle(editor, style) {
+  const sel = window.getSelection();
+  if (!sel.rangeCount) return;
+  const range = sel.getRangeAt(0);
+  if (range.collapsed) return;
+  const span = document.createElement('span');
+  Object.assign(span.style, style);
+  try {
+    span.appendChild(range.extractContents());
+    range.insertNode(span);
+    sel.removeAllRanges();
+    const nr = document.createRange();
+    nr.selectNodeContents(span);
+    sel.addRange(nr);
+  } catch (e) { return; }
+  editor.dispatchEvent(new Event('input', { bubbles: true }));
+}
+function sanitizePasted(html) {
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+
+  // 1. Удаляем целиком теги, чьё содержимое не должно попадать в текст
+  const REMOVE = ['STYLE','SCRIPT','META','LINK','TITLE','HEAD','XML','TEMPLATE',
+                  'NOSCRIPT','IFRAME','OBJECT','EMBED','SVG'];
+  REMOVE.forEach(tag => tmp.querySelectorAll(tag).forEach(n => n.remove()));
+
+  // Word-специфичные теги: o:p, w:*, v:*, m:* — удаляем с содержимым
+  Array.from(tmp.querySelectorAll('*')).forEach(n => {
+    if (/^(O|W|V|M):/i.test(n.tagName)) n.remove();
+  });
+
+  // 2. Удаляем HTML-комментарии (они раздувают хранилище)
+  const walker = document.createTreeWalker(tmp, NodeFilter.SHOW_COMMENT);
+  const comments = [];
+  while (walker.nextNode()) comments.push(walker.currentNode);
+  comments.forEach(c => c.remove());
+
+  // 3. Белый список тегов: разрешённые оставляем, остальные разворачиваем
+  const KEEP = new Set([
+    'B','STRONG','I','EM','U','S','SPAN','P','DIV','BR',
+    'UL','OL','LI','A','CODE','PRE','BLOCKQUOTE',
+    'H1','H2','H3','H4','H5','H6',
+    'TABLE','THEAD','TBODY','TR','TD','TH'
+  ]);
+
+  const process = node => {
+    if (node.nodeType !== 1) return;
+    const tag = node.tagName.toUpperCase();
+
+    if (!KEEP.has(tag)) {
+      const parent = node.parentNode;
+      if (!parent) return;
+      while (node.firstChild) parent.insertBefore(node.firstChild, node);
+      node.remove();
+      return;
+    }
+
+    let color = '', fontSize = '';
+    if (tag === 'SPAN') {
+      color = node.style.color;
+      fontSize = node.style.fontSize;
+    }
+    Array.from(node.attributes).forEach(a => node.removeAttribute(a.name));
+    if (tag === 'SPAN') {
+      if (color) node.style.color = color;
+      if (fontSize) node.style.fontSize = fontSize;
+    }
+    Array.from(node.childNodes).forEach(process);
+  };
+  Array.from(tmp.childNodes).forEach(process);
+
+  // 4. Нормализуем пробелы в текстовых узлах (кроме PRE/CODE).
+  // Word вставляет переводы строк и табы для читабельности HTML —
+  // при white-space:pre-wrap они видны как лишние переносы.
+  const normalizeText = (node, inPre) => {
+    if (node.nodeType === 3) {
+      if (!inPre) {
+        node.textContent = node.textContent
+          .replace(/[\n\r\t]+/g, ' ')
+          .replace(/ {2,}/g, ' ');
+      }
+    } else if (node.nodeType === 1) {
+      const isPre = node.tagName === 'PRE' || node.tagName === 'CODE';
+      Array.from(node.childNodes).forEach(c => normalizeText(c, inPre || isPre));
+    }
+  };
+  Array.from(tmp.childNodes).forEach(c => normalizeText(c, false));
+
+  // 5. Удаляем пустые абзацы — Word вставляет их для пустых строк,
+  // получаются лишние двойные отступы
+  tmp.querySelectorAll('p, div').forEach(n => {
+    const empty = !n.textContent.replace(/\u00a0/g, '').trim();
+    const hasContent = n.querySelector('img, br, ul, ol, table, pre');
+    if (empty && !hasContent) n.remove();
+  });
+
+  // 6. Убираем <br> в начале и в конце
+  while (tmp.firstChild && tmp.firstChild.nodeName === 'BR') tmp.firstChild.remove();
+  while (tmp.lastChild && tmp.lastChild.nodeName === 'BR') tmp.lastChild.remove();
+
+  return tmp.innerHTML;
+}
+
+function buildToolbar(editor) {
+  const tb = el('div', { class: 'block-toolbar' });
+
+  const cmdBtn = (cmd, html, title) => el('button', {
+    class: 'tb-btn', html, title,
+    onmousedown: e => e.preventDefault(),
+    onclick: () => applyCmd(editor, cmd)
+  });
+
+  tb.append(
+    cmdBtn('bold', '<b>B</b>', 'Жирный'),
+    cmdBtn('italic', '<i>I</i>', 'Курсив'),
+    cmdBtn('underline', '<u>U</u>', 'Подчёркнутый'),
+    cmdBtn('strikeThrough', '<s>S</s>', 'Зачёркнутый'),
+    el('span', { class: 'tb-sep' })
+  );
+
+  const colors = ['#e7ecf3', '#ef4444', '#22c55e', '#3b82f6', '#eab308', '#a855f7', '#f97316'];
+  colors.forEach(c => {
+    tb.append(el('button', {
+      class: 'tb-color', title: c, style: `background:${c}`,
+      onmousedown: e => e.preventDefault(),
+      onclick: () => wrapSelectionStyle(editor, { color: c })
+    }));
+  });
+
+  tb.append(el('span', { class: 'tb-sep' }));
+
+  const sizeSel = el('select', { class: 'tb-select', title: 'Размер шрифта' },
+    el('option', { value: '', text: 'Размер' }),
+    el('option', { value: '13px', text: 'Мелкий' }),
+    el('option', { value: '15px', text: 'Обычный' }),
+    el('option', { value: '18px', text: 'Крупный' }),
+    el('option', { value: '22px', text: 'Большой' }),
+    el('option', { value: '26px', text: 'Заголовок' })
+  );
+  let savedRange = null;
+  sizeSel.addEventListener('mousedown', () => {
+    const s = window.getSelection();
+    savedRange = (s.rangeCount && editor.contains(s.anchorNode)) ? s.getRangeAt(0).cloneRange() : null;
+  });
+  sizeSel.addEventListener('change', () => {
+    if (!savedRange) { sizeSel.value = ''; return; }
+    editor.focus();
+    const s = window.getSelection();
+    s.removeAllRanges();
+    s.addRange(savedRange);
+    wrapSelectionStyle(editor, { fontSize: sizeSel.value });
+    sizeSel.value = '';
+    savedRange = null;
+  });
+  tb.append(sizeSel);
+
+  tb.append(el('span', { class: 'tb-sep' }));
+  tb.append(cmdBtn('removeFormat', 'Tx', 'Убрать форматирование'));
+
+  return tb;
+}
+
+function blockCard(l, b, idx) {
+  if (b.type === 'image') return imageBlockCard(l, b, idx);
+
+  const card = el('div', { class: 'doc-block', 'data-type': b.type });
+
+  const titleInput = el('input', {
+    class: 'block-title-input', value: b.title || '', placeholder: typeLabel(b.type)
+  });
+  titleInput.oninput = () => { b.title = titleInput.value; save(); };
+
+  const menuBtn = el('button', {
+    class: 'block-menu-btn', text: '⋮', title: 'Действия блока',
+    onclick: e => { e.stopPropagation(); toggleBlockPopover(e.currentTarget, l, b, idx); }
+  });
+
+  card.append(el('div', { class: 'block-head' },
+    el('span', { class: 'block-tag type-' + b.type, text: b.type === 'vocab' ? 'V' : b.type === 'grammar' ? 'G' : '+' }),
+    titleInput,
+    menuBtn
+  ));
+
+  if (b.type !== 'vocab') {
+    const editor = el('div', {
+      class: 'block-editor',
+      contenteditable: 'true',
+      'data-placeholder': 'Правило, примеры, заметки…',
+      spellcheck: 'true'
+    });
+    if (b.html) {
+      editor.innerHTML = b.html;
+      if (!b.text) b.text = editor.innerText;
+    } else if (b.text) {
+      editor.textContent = b.text;
+    }
+
+    const updateEmpty = () => {
+      const empty = editor.textContent.trim() === '' && !editor.querySelector('img');
+      editor.classList.toggle('is-empty', empty);
+    };
+    updateEmpty();
+
+    editor.addEventListener('input', () => {
+      b.html = editor.innerHTML;
+      b.text = editor.innerText;
+      updateEmpty();
+      save();
+    });
+    editor.addEventListener('focus', () => card.classList.add('is-focused'));
+    editor.addEventListener('blur', () => {
+      setTimeout(() => {
+        if (!card.contains(document.activeElement)) card.classList.remove('is-focused');
+      }, 120);
+    });
+
+editor.addEventListener('paste', e => {
+  if (!e.clipboardData) return;
+
+  // Картинки обрабатывает глобальный обработчик — здесь пропускаем
+  const items = Array.from(e.clipboardData.items || []);
+  if (items.some(i => i.type.startsWith('image/'))) return;
+
+  const html = e.clipboardData.getData('text/html');
+  const plain = e.clipboardData.getData('text/plain') || '';
+
+  // Shift+Ctrl+V / Shift+Cmd+V — принудительно вставить как чистый текст
+  if (e.shiftKey) {
+    e.preventDefault();
+    document.execCommand('insertText', false, plain);
+    editor.dispatchEvent(new Event('input', { bubbles: true }));
+    return;
+  }
+
+  if (html) {
+    e.preventDefault();
+    const clean = sanitizePasted(html);
+    // Если после чистки остался только мусор — откатываемся на plain text
+    if (clean && clean.replace(/<[^>]+>/g, '').trim()) {
+      document.execCommand('insertHTML', false, clean);
+    } else {
+      document.execCommand('insertText', false, plain);
+    }
+    editor.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+});
+
+    card.append(buildToolbar(editor), editor);
+  }
+
+  if (b.type !== 'grammar') {
+    if (!Array.isArray(b.items)) b.items = [];
+    const list = el('div', { class: 'vocab-list' });
+    b.items.forEach(it => list.append(vocabRow(b, it, list)));
+    list.append(el('button', {
+      class: 'add-inline', text: '+ Слово',
+      onclick: () => addVocabRow(b, list)
+    }));
+    card.append(list);
+  }
+
+  return card;
+}
+
+/* ---------- Строка словаря ---------- */
+function autoGrowTextarea(t) {
+  t.style.height = 'auto';
+  t.style.height = Math.max(32, t.scrollHeight) + 'px';
+}
+
+function vocabRow(b, it, list) {
+  const term = el('input', { class: 'vocab-input vocab-term', placeholder: 'Слово / фраза', value: it.term || '' });
+  term.oninput = () => { it.term = term.value; save(); };
+
+  const def = el('textarea', { class: 'vocab-input vocab-def', placeholder: 'Перевод / значение', rows: '1' });
+  def.value = it.def || '';
+  def.oninput = () => { it.def = def.value; save(); autoGrowTextarea(def); };
+
+  const note = el('textarea', { class: 'vocab-input vocab-note', placeholder: 'Заметка', rows: '1' });
+  note.value = it.note || '';
+  note.oninput = () => { it.note = note.value; save(); autoGrowTextarea(note); };
+
+  const remove = el('button', {
+    class: 'vocab-remove', text: '✕', title: 'Удалить',
+    onclick: () => {
+      const i = b.items.indexOf(it);
+      if (i >= 0) b.items.splice(i, 1);
+      save();
+      const row = remove.closest('.vocab-row');
+      if (row) row.remove();
+    }
+  });
+
+  const row = el('div', { class: 'vocab-row' }, term, def, note, remove);
+
+  note.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      insertVocabAfter(b, it, list);
+    }
+  });
+  def.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && !it.note) {
+      e.preventDefault();
+      insertVocabAfter(b, it, list);
+    }
+  });
+
+  requestAnimationFrame(() => {
+    autoGrowTextarea(def);
+    autoGrowTextarea(note);
+  });
+
+  return row;
+}
+function insertVocabAfter(b, it, list) {
+  const newIt = { id: uid(), term: '', def: '', note: '' };
+  const idx = b.items.indexOf(it);
+  b.items.splice(idx + 1, 0, newIt);
+  save();
+  const newRow = vocabRow(b, newIt, list);
+  const current = list.querySelectorAll('.vocab-row')[idx] || null;
+  if (current && current.nextSibling) list.insertBefore(newRow, current.nextSibling);
+  else list.insertBefore(newRow, list.lastElementChild);
+  newRow.querySelector('.vocab-term').focus();
+}
+function addVocabRow(b, list) {
+  const newIt = { id: uid(), term: '', def: '', note: '' };
+  b.items.push(newIt); save();
+  const newRow = vocabRow(b, newIt, list);
+  list.insertBefore(newRow, list.lastElementChild);
+  newRow.querySelector('.vocab-term').focus();
+}
+
+/* ============ Блок изображения ============ */
+function imageBlockCard(l, b, idx) {
+  if (!Array.isArray(b.images)) b.images = [];
+  b.size = b.size || 'medium';
+  b.align = b.align || 'center';
+
+  const wrap = el('div', { class: 'doc-block', 'data-type': 'image' });
+  const inner = el('div', { class: 'image-block-wrap' });
+
+  const replaceInput = el('input', { type: 'file', accept: 'image/*', style: 'display:none' });
+  replaceInput.onchange = async () => {
+    const f = replaceInput.files[0];
+    if (!f) return;
+    try {
+      const src = await imageToDataURL(f);
+      if (b.images[0]) b.images[0].src = src;
+      else b.images.push({ id: uid(), src });
+      save(); render();
+    } catch { toast('Не удалось прочитать изображение'); }
+  };
+
+  const controls = el('div', { class: 'image-controls' });
+  ['small', 'medium', 'large', 'full'].forEach(s => {
+    controls.append(el('button', {
+      class: 'image-ctrl' + (b.size === s ? ' active' : ''),
+      text: { small: 'S', medium: 'M', large: 'L', full: 'F' }[s],
+      title: { small: 'Маленький', medium: 'Средний', large: 'Большой', full: 'Во всю ширину' }[s],
+      onclick: e => { e.stopPropagation(); b.size = s; save(); render(); }
+    }));
+  });
+  controls.append(el('div', { class: 'image-ctrl-sep' }));
+  ['left', 'center', 'right'].forEach(a => {
+    controls.append(el('button', {
+      class: 'image-ctrl' + (b.align === a ? ' active' : ''),
+      text: { left: '◀', center: '●', right: '▶' }[a],
+      title: { left: 'По левому краю', center: 'По центру', right: 'По правому краю' }[a],
+      onclick: e => { e.stopPropagation(); b.align = a; save(); render(); }
+    }));
+  });
+  controls.append(el('div', { class: 'image-ctrl-sep' }));
+  controls.append(el('button', {
+    class: 'image-ctrl', text: '↻', title: 'Заменить',
+    onclick: e => { e.stopPropagation(); replaceInput.click(); }
+  }));
+  controls.append(el('button', {
+    class: 'image-ctrl', text: '↑', title: 'Выше',
+    onclick: e => { e.stopPropagation(); moveBlock(l, idx, -1); }
+  }));
+  controls.append(el('button', {
+    class: 'image-ctrl', text: '↓', title: 'Ниже',
+    onclick: e => { e.stopPropagation(); moveBlock(l, idx, 1); }
+  }));
+  controls.append(el('button', {
+    class: 'image-ctrl danger', text: '✕', title: 'Удалить',
+    onclick: e => {
+      e.stopPropagation();
+      if (!confirm('Удалить изображение?')) return;
+      l.blocks.splice(idx, 1); save(); render();
+    }
+  }));
+
+  if (!b.images.length) {
+    inner.append(
+      el('div', {
+        class: 'image-empty-placeholder',
+        text: 'Нажмите, чтобы выбрать изображение',
+        onclick: () => replaceInput.click()
+      }),
+      replaceInput
+    );
+  } else {
+    const img = el('img', {
+      src: b.images[0].src,
+      class: 'image-media size-' + b.size + ' align-' + b.align,
+      alt: ''
+    });
+    img.onclick = () => lightbox(b.images[0].src);
+
+    const caption = el('input', {
+      class: 'image-caption-input',
+      placeholder: 'Добавить подпись…',
+      value: b.text || ''
+    });
+    caption.oninput = () => { b.text = caption.value; save(); };
+
+    inner.append(img, controls, caption, replaceInput);
+  }
+
+  wrap.append(inner);
+  return wrap;
+}
+
+/* ---------- вставка изображений ---------- */
+let globalImageInput = null;
+function ensureImageInput() {
+  if (!globalImageInput) {
+    globalImageInput = el('input', { type: 'file', accept: 'image/*', multiple: '', style: 'display:none' });
+    document.body.append(globalImageInput);
+  }
+  return globalImageInput;
+}
+function pickImageAtEnd(l) {
+  const inp = ensureImageInput();
+  inp.onchange = async () => {
+    const files = Array.from(inp.files || []);
+    inp.value = '';
+    if (!files.length) return;
+    for (const f of files) {
+      try { l.blocks.push(newImageBlock(await imageToDataURL(f))); }
+      catch { toast('Не удалось прочитать изображение'); }
+    }
+    save(); render();
+  };
+  inp.click();
+}
+
+document.addEventListener('paste', e => {
+  if (nav.view !== 'lesson') return;
+  if (!aiSheet.classList.contains('hidden')) return;
+  if (!$('#modal').classList.contains('hidden')) return;
+
+  const items = Array.from(e.clipboardData && e.clipboardData.items || []);
+  const images = items.filter(i => i.type.startsWith('image/'));
+  if (!images.length) return;
+  e.preventDefault();
+
+  const { l } = findLesson();
+  if (!l) return;
+
+  let insertAt = l.blocks.length;
+  const focused = document.activeElement;
+  const blockEl = focused && focused.closest && focused.closest('.doc-block');
+  if (blockEl) {
+    const allBlocks = Array.from(document.querySelectorAll('.doc-block'));
+    const pos = allBlocks.indexOf(blockEl);
+    if (pos >= 0) insertAt = pos + 1;
+  }
+
+  (async () => {
+    let pos = insertAt;
+    for (const item of images) {
+      const f = item.getAsFile(); if (!f) continue;
+      try { l.blocks.splice(pos, 0, newImageBlock(await imageToDataURL(f))); pos++; } catch {}
+    }
+    save(); render();
+    toast('Изображение добавлено');
+  })();
+});
+
+let dragCounter = 0;
+content.addEventListener('dragenter', e => {
+  if (nav.view !== 'lesson') return;
+  if (!e.dataTransfer || !e.dataTransfer.types || !Array.from(e.dataTransfer.types).includes('Files')) return;
+  dragCounter++;
+  document.body.classList.add('dragging-file');
+});
+content.addEventListener('dragover', e => {
+  if (nav.view !== 'lesson') return;
+  if (!e.dataTransfer || !e.dataTransfer.types || !Array.from(e.dataTransfer.types).includes('Files')) return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'copy';
+});
+content.addEventListener('dragleave', () => {
+  if (nav.view !== 'lesson') return;
+  dragCounter = Math.max(0, dragCounter - 1);
+  if (dragCounter === 0) document.body.classList.remove('dragging-file');
+});
+content.addEventListener('drop', async e => {
+  if (nav.view !== 'lesson') return;
+  dragCounter = 0;
+  document.body.classList.remove('dragging-file');
+  const files = Array.from((e.dataTransfer && e.dataTransfer.files) || []).filter(f => f.type.startsWith('image/'));
+  if (!files.length) return;
+  e.preventDefault();
+  const { l } = findLesson(); if (!l) return;
+  let insertAt = l.blocks.length;
+  const target = document.elementFromPoint(e.clientX, e.clientY);
+  const blockEl = target && target.closest && target.closest('.doc-block');
+  if (blockEl) {
+    const allBlocks = Array.from(document.querySelectorAll('.doc-block'));
+    const pos = allBlocks.indexOf(blockEl);
+    if (pos >= 0) insertAt = pos + 1;
+  }
+  let pos = insertAt;
+  for (const f of files) {
+    try { l.blocks.splice(pos, 0, newImageBlock(await imageToDataURL(f))); pos++; }
+    catch { toast('Не удалось прочитать изображение'); }
+  }
+  save(); render();
+});
+
+function lightbox(src) {
+  const box = el('div', { class: 'lightbox', onclick: () => box.remove() }, el('img', { src }));
+  document.body.append(box);
+}
+function imageToDataURL(file, maxSide = 1400, quality = 0.82) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      let w = img.naturalWidth, h = img.naturalHeight;
+      const k = Math.min(1, maxSide / Math.max(w, h));
+      w = Math.round(w * k); h = Math.round(h * k);
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(url);
+      resolve(c.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('bad image')); };
+    img.src = url;
+  });
+}
+
+/* ---------- popover меню блока ---------- */
+let openPopover = null;
+function closeBlockPopover() {
+  if (openPopover) { openPopover.remove(); openPopover = null; }
+}
+function toggleBlockPopover(btn, l, b, idx) {
+  if (openPopover) { closeBlockPopover(); return; }
+  const menu = el('div', { class: 'block-popover' });
+  const mk = (label, fn, cls) => {
+    const x = el('button', { class: 'pop-item' + (cls ? ' ' + cls : ''), text: label });
+    x.onclick = () => { fn(); closeBlockPopover(); };
+    return x;
+  };
+  menu.append(
+    mk('↑ Переместить вверх', () => moveBlock(l, idx, -1)),
+    mk('↓ Переместить вниз', () => moveBlock(l, idx, 1)),
+    el('div', { class: 'pop-sep' }),
+    mk('Удалить блок', () => {
+      if (!confirm('Удалить блок «' + (b.title || typeLabel(b.type)) + '»?')) return;
+      l.blocks.splice(idx, 1); save(); render();
+    }, 'danger')
+  );
+  document.body.append(menu);
+  const r = btn.getBoundingClientRect();
+  const w = menu.offsetWidth, h = menu.offsetHeight;
+  let top = r.bottom + 4;
+  if (top + h > window.innerHeight - 8) top = r.top - h - 4;
+  let left = r.right - w;
+  if (left < 8) left = 8;
+  if (left + w > window.innerWidth - 8) left = window.innerWidth - w - 8;
+  menu.style.top = top + 'px';
+  menu.style.left = left + 'px';
+  openPopover = menu;
+  setTimeout(() => {
+    const close = ev => {
+      if (openPopover && !openPopover.contains(ev.target)) {
+        closeBlockPopover();
+        document.removeEventListener('click', close);
+        window.removeEventListener('scroll', close, true);
+      }
+    };
+    document.addEventListener('click', close);
+    window.addEventListener('scroll', close, true);
+  }, 0);
+}
+function moveBlock(l, idx, dir) {
+  const j = idx + dir;
+  if (j < 0 || j >= l.blocks.length) return;
+  [l.blocks[idx], l.blocks[j]] = [l.blocks[j], l.blocks[idx]];
+  save(); render();
+}
+
+/* ============ Обзор ============ */
+function buildMarkdown(m) {
+  const out = [];
+  out.push('# ' + (m.title || 'Модуль'));
+  out.push('');
+
+  m.lessons.forEach((l, i) => {
+    if (i > 0) {
+      out.push('');
+      out.push('---');
+      out.push('');
+    }
+
+    out.push('## Урок ' + l.letter + (l.title ? ' — ' + l.title : ''));
+    out.push('');
+
+    l.blocks.forEach(b => {
+      if (b.type === 'image') {
+        if (b.images && b.images[0]) {
+          out.push('*Изображение' + (b.text ? ': ' + b.text : '') + '*');
+          out.push('');
+        }
+        return;
+      }
+
+      out.push('### ' + (b.title || typeLabel(b.type)));
+      out.push('');
+
+      const plain = (b.text || '').trim();
+      if (plain) { out.push(plain); out.push(''); }
+
+      if (b.items && b.items.length) {
+        b.items.forEach(it => {
+          if (!it.term && !it.def && !it.note) return;
+          let s = '- **' + (it.term || '—') + '**';
+          if (it.def) s += ' — ' + it.def;
+          if (it.note) s += ' _(' + it.note + ')_';
+          out.push(s);
+        });
+        out.push('');
+      }
+    });
+  });
+
+  return out.join('\n').replace(/\n{3,}/g, '\n\n');
+}
+
+function escHTML(s) {
+  return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+}
+function pluralRu(n, forms) {
+  const a = Math.abs(n) % 100, b = a % 10;
+  if (a > 10 && a < 20) return forms[2];
+  if (b === 1) return forms[0];
+  if (b >= 2 && b <= 4) return forms[1];
+  return forms[2];
+}
+function moduleMetaParts(m) {
+  let totalWords = 0, totalImages = 0;
+  m.lessons.forEach(l => l.blocks.forEach(b => {
+    if (b.type === 'image') { if (b.images && b.images[0]) totalImages++; return; }
+    if (Array.isArray(b.items)) totalWords += b.items.filter(it => it.term || it.def).length;
+  }));
+  const parts = [];
+  parts.push(m.lessons.length + ' ' + pluralRu(m.lessons.length, ['урок', 'урока', 'уроков']));
+  if (totalWords) parts.push(totalWords + ' ' + pluralRu(totalWords, ['слово', 'слова', 'слов']));
+  if (totalImages) parts.push(totalImages + ' ' + pluralRu(totalImages, ['изображение', 'изображения', 'изображений']));
+  return parts;
+}
+
+function themeCSSBlocks() {
+  return `
+    *{box-sizing:border-box}
+    body{font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;max-width:820px;margin:0 auto;padding:32px 20px 64px;color:#1c2230;background:#f5f6f8}
+    .module-head{text-align:center;margin-bottom:40px;padding-bottom:24px;border-bottom:2px solid #7c6cf5}
+    .module-head h1{margin:0 0 10px;color:#1c2230;font-size:30px;font-weight:700;line-height:1.2}
+    .module-meta{font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:#8a8a9a;font-weight:600}
+    .lesson{background:#fff;border-radius:14px;padding:24px;margin-bottom:24px;box-shadow:0 1px 3px rgba(0,0,0,.04);border:1px solid #e8ebf0;page-break-inside:avoid}
+    .lesson-head{display:flex;align-items:center;gap:14px;padding-bottom:16px;margin-bottom:20px;border-bottom:2px solid #f0f2f6}
+    .lesson-letter{flex:none;width:48px;height:48px;background:#7c6cf5;color:#fff;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:22px;box-shadow:0 4px 14px rgba(124,108,245,.3)}
+    .lesson-info{flex:1;min-width:0}
+    .lesson-num{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#8a8a9a;margin-bottom:2px}
+    .lesson-title{margin:0;font-size:22px;font-weight:700;color:#1c2230;line-height:1.25}
+    .block{background:#f6f7fb;border-left:4px solid #7c6cf5;border-radius:10px;padding:14px 18px;margin:12px 0}
+    .block:first-child{margin-top:0}
+    .block:last-child{margin-bottom:0}
+    .block-title{margin:0 0 10px;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#7c6cf5}
+    .block-text{line-height:1.65;color:#2a2a3a}
+    .block-text p{margin:0 0 10px}
+    .block-text p:last-child{margin-bottom:0}
+    .vocab{list-style:none;padding:0;margin:0}
+    .vocab-item{padding:8px 0;border-bottom:1px solid rgba(0,0,0,.06);line-height:1.5}
+    .vocab-item:last-child{border-bottom:none;padding-bottom:0}
+    .vocab-term{font-weight:600;color:#1c2230}
+    .vocab-def{color:#4a4a58}
+    .vocab-note{display:block;margin-top:2px;font-size:13px;color:#8a8a9a;font-style:italic}
+    .block-image{margin:20px auto;text-align:center}
+    .block-image img{max-width:100%;border-radius:10px;display:block;margin:0 auto}
+    .block-image figcaption{margin-top:10px;font-size:13px;color:#8a8a9a;font-style:italic}
+    @media print{body{background:#fff;padding:0}.lesson{box-shadow:none;border:none}}
+  `;
+}
+
+function themeCSSBook() {
+  return `
+    *{box-sizing:border-box}
+    body{font:16px/1.75 Georgia,"Times New Roman",serif;max-width:780px;margin:0 auto;padding:52px 24px 80px;color:#1c1c2e;background:#fdfcfa}
+    ::selection{background:#e8e5f5}
+    .module-head{text-align:center;margin-bottom:56px}
+    .module-head h1{font-size:34px;font-weight:700;margin:0 0 14px;color:#151528;letter-spacing:-.5px;line-height:1.2}
+    .module-meta{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:12px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:#8a8a9a}
+    .module-head::after{content:"";display:block;border-top:3px double #7c6cf5;width:100px;margin:24px auto 0}
+    .lesson{position:relative;padding-top:64px;margin-top:64px}
+    .lesson:first-of-type{padding-top:0;margin-top:0}
+    .lesson:not(:first-of-type)::before{content:"";position:absolute;top:0;left:0;right:0;border-top:1px solid #e2ddef}
+    .lesson:not(:first-of-type)::after{content:"⁂";position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:#fdfcfa;padding:0 14px;color:#7c6cf5;font-size:20px;line-height:1}
+    .lesson-head{display:flex;align-items:flex-start;gap:16px;margin-bottom:32px}
+    .lesson-letter{flex:none;width:48px;height:48px;background:#7c6cf5;color:#fff;border-radius:12px;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-weight:800;font-size:22px;box-shadow:0 4px 14px rgba(124,108,245,.35)}
+    .lesson-info{flex:1;min-width:0;padding-top:2px}
+    .lesson-num{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#8a8a9a;margin-bottom:4px}
+    .lesson-title{font-size:24px;font-weight:700;margin:0;color:#151528;line-height:1.25;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    .block{margin:0 0 28px}
+    .block:last-child{margin-bottom:0}
+    .block-title{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#7c6cf5;margin:0 0 12px;padding-bottom:8px;border-bottom:1px solid #e8e5f5}
+    .block-text{line-height:1.75;color:#2a2a3a}
+    .block-text p{margin:0 0 12px}
+    .block-text p:last-child{margin-bottom:0}
+    .vocab{list-style:none;padding:0;margin:0}
+    .vocab-item{padding:10px 0;border-bottom:1px solid #eee;line-height:1.5}
+    .vocab-item:last-child{border-bottom:none;padding-bottom:0}
+    .vocab-term{font-weight:600;color:#151528}
+    .vocab-def{color:#4a4a58}
+    .vocab-note{color:#8a8a9a;font-style:italic;font-size:14px;display:block;margin-top:3px}
+    .block-image{margin:32px auto;text-align:center}
+    .block-image img{max-width:100%;border-radius:10px;display:block;margin:0 auto;box-shadow:0 4px 20px rgba(0,0,0,.08)}
+    .block-image figcaption{margin-top:12px;color:#8a8a9a;font-style:italic;font-size:14px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    @media print{body{background:#fff;padding:0}.lesson:not(:first-of-type)::after{background:#fff}}
+  `;
+}
+
+function themeCSSStandard() {
+  return `
+    *{box-sizing:border-box}
+    body{font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif;max-width:760px;margin:0 auto;padding:48px 24px 80px;color:#1a1a2e;background:#fafbfc}
+    .module-head{margin-bottom:48px}
+    .module-head h1{margin:0 0 8px;font-size:32px;font-weight:700;color:#0f0f1e;letter-spacing:-.5px;line-height:1.2}
+    .module-meta{font-size:13px;color:#6b7280;font-weight:500}
+    .lesson{padding-top:56px;margin-top:56px;border-top:1px solid #e5e7eb}
+    .lesson:first-of-type{padding-top:0;margin-top:0;border-top:none}
+    .lesson-head{display:flex;align-items:baseline;gap:16px;margin-bottom:24px}
+    .lesson-letter{flex:none;font-size:48px;font-weight:800;color:#7c6cf5;line-height:1;letter-spacing:-2px}
+    .lesson-info{flex:1;min-width:0}
+    .lesson-num{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#9ca3af;margin-bottom:4px}
+    .lesson-title{margin:0;font-size:24px;font-weight:600;color:#0f0f1e;line-height:1.3}
+    .block{margin-bottom:28px}
+    .block:last-child{margin-bottom:0}
+    .block-title{margin:0 0 8px;font-size:12px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:#7c6cf5}
+    .block-text{color:#374151;line-height:1.7}
+    .block-text p{margin:0 0 10px}
+    .block-text p:last-child{margin-bottom:0}
+    .vocab{list-style:none;padding:0;margin:0}
+    .vocab-item{padding:8px 0;border-bottom:1px solid #f0f1f4;line-height:1.5}
+    .vocab-item:last-child{border-bottom:none}
+    .vocab-term{font-weight:600;color:#0f0f1e}
+    .vocab-def{color:#4b5563}
+    .vocab-note{display:block;margin-top:2px;font-size:13px;color:#9ca3af;font-style:italic}
+    .block-image{margin:24px auto;text-align:center}
+    .block-image img{max-width:100%;border-radius:6px;display:block;margin:0 auto}
+    .block-image figcaption{margin-top:10px;font-size:13px;color:#9ca3af}
+    @media print{body{background:#fff;padding:0}}
+  `;
+}
+
+function buildHTML(m, theme) {
+  theme = theme || 'standard';
+  const esc = escHTML;
+  const metaParts = moduleMetaParts(m);
+
+  const lessonsHTML = m.lessons.map(l => {
+    const blocksHTML = l.blocks.map(b => {
+      if (b.type === 'image') {
+        if (!b.images || !b.images[0]) return '';
+        const size = { small: 'max-width:240px', medium: 'max-width:420px', large: 'max-width:640px', full: 'width:100%' }[b.size || 'medium'];
+        const align = {
+          left: 'margin-left:0;margin-right:auto',
+          center: 'margin-left:auto;margin-right:auto',
+          right: 'margin-left:auto;margin-right:0'
+        }[b.align || 'center'];
+        return '<figure class="block-image" style="' + size + ';' + align + '">' +
+          '<img src="' + b.images[0].src + '" alt="">' +
+          (b.text ? '<figcaption>' + esc(b.text) + '</figcaption>' : '') +
+          '</figure>';
+      }
+
+      let content = '';
+      if (b.html && b.html.trim()) content += '<div class="block-text">' + b.html + '</div>';
+      else if (b.text && b.text.trim()) content += '<div class="block-text">' + esc(b.text.trim()).replace(/\n/g, '<br>') + '</div>';
+
+      if (b.items && b.items.length) {
+        const items = b.items.filter(it => it.term || it.def || it.note);
+        if (items.length) {
+          content += '<ul class="vocab">' + items.map(it => {
+            let row = '<li class="vocab-item">';
+            if (it.term) row += '<span class="vocab-term">' + esc(it.term) + '</span>';
+            if (it.def) row += (it.term ? ' — ' : '') + '<span class="vocab-def">' + esc(it.def) + '</span>';
+            if (it.note) row += '<span class="vocab-note">' + esc(it.note) + '</span>';
+            row += '</li>';
+            return row;
+          }).join('') + '</ul>';
+        }
+      }
+
+      return '<div class="block"><h3 class="block-title">' + esc(b.title || typeLabel(b.type)) + '</h3>' + content + '</div>';
+    }).join('');
+
+    return '<article class="lesson">' +
+      '<header class="lesson-head">' +
+        '<div class="lesson-letter">' + esc(l.letter) + '</div>' +
+        '<div class="lesson-info">' +
+          '<div class="lesson-num">Урок</div>' +
+          '<h2 class="lesson-title">' + esc(l.title || 'Урок ' + l.letter) + '</h2>' +
+        '</div>' +
+      '</header>' +
+      '<div class="lesson-body">' + blocksHTML + '</div>' +
+      '</article>';
+  }).join('');
+
+  const header = '<div class="module-head">' +
+    '<h1>' + esc(m.title || 'Модуль') + '</h1>' +
+    '<div class="module-meta">' + esc(metaParts.join(' · ')) + '</div>' +
+    '</div>';
+
+  const style = theme === 'blocks' ? themeCSSBlocks()
+               : theme === 'book'   ? themeCSSBook()
+               :                      themeCSSStandard();
+
+  return '<!DOCTYPE html><html lang="ru"><head><meta charset="utf-8">' +
+    '<meta name="viewport" content="width=device-width,initial-scale=1">' +
+    '<title>' + esc(m.title || 'Модуль') + '</title>' +
+    '<style>' + style + '</style></head><body>' +
+    header + lessonsHTML +
+    '</body></html>';
+}
+
+function openOverview(m) {
+  const md = buildMarkdown(m);
+  const safeName = (m.title || 'module').replace(/[^\wа-яА-ЯёЁ\- ]+/g, '').trim().replace(/\s+/g, '-') || 'module';
+
+  let selectedTheme = 'standard';
+
+  const themeButtons = {};
+  const setTheme = (t) => {
+    selectedTheme = t;
+    Object.values(themeButtons).forEach(b => b.classList.toggle('active', b.dataset.theme === t));
+  };
+
+  const themeOptions = [
+    { id: 'blocks', icon: '🧱', label: 'Блоки', title: 'Блоки-карточки, как раньше, с явным разделением уроков' },
+    { id: 'book', icon: '📖', label: 'Книга', title: 'Тёплое книжное оформление с орнаментальными разделителями' },
+    { id: 'standard', icon: '▫️', label: 'Стандарт', title: 'Современный минимализм без засечек, без «блочности»' }
+  ];
+
+  const themeSelector = el('div', { class: 'theme-selector' },
+    el('div', { class: 'theme-selector-label', text: 'Тема оформления HTML' }),
+    el('div', { class: 'theme-buttons' },
+      ...themeOptions.map(o => {
+        const btn = el('button', {
+          class: 'theme-btn' + (o.id === 'standard' ? ' active' : ''),
+          'data-theme': o.id,
+          title: o.title,
+          onclick: () => setTheme(o.id)
+        },
+          el('span', { class: 'theme-btn-icon', text: o.icon }),
+          el('span', { class: 'theme-btn-label', text: o.label })
+        );
+        themeButtons[o.id] = btn;
+        return btn;
+      })
+    )
+  );
+
+  const body = el('div', { style: 'display:flex;flex-direction:column;gap:12px' },
+    themeSelector,
+    el('pre', { class: 'md', text: md })
+  );
+
+  const actions = [
+    el('button', {
+      class: 'btn', text: 'Копировать MD',
+      onclick: async () => {
+        try { await navigator.clipboard.writeText(md); toast('Скопировано'); }
+        catch { toast('Не удалось скопировать'); }
+      }
+    }),
+    el('button', {
+      class: 'btn', text: '⬇ Скачать .md',
+      onclick: () => download(safeName + '.md', md, 'text/markdown;charset=utf-8')
+    }),
+    el('button', {
+      class: 'btn primary', text: '⬇ Скачать .html',
+      onclick: () => download(safeName + '.html', buildHTML(m, selectedTheme), 'text/html;charset=utf-8')
+    })
+  ];
+
+  openModal('Обзор: ' + (m.title || 'Модуль'), body, actions);
+}
+function download(name, text, type) {
+  const blob = new Blob([text], { type: type || 'text/plain;charset=utf-8' });
+  const a = el('a', { href: URL.createObjectURL(blob), download: name });
+  document.body.append(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+}
+
+/* ============ ИИ-помощник ============ */
+const SYSTEM_PROMPT =
+  'Ты — помощник в изучении английского языка. Отвечай по-русски понятно и по делу. ' +
+  'Объём: до 500 слов или до 10 предложений. Не растекайся, не повторяй вопрос. ' +
+  'Если просят объяснить правило — суть, механику и 1–2 коротких примера. ' +
+  'Если разбирают слово или фразу — перевод, часть речи, оттенок значения и пример. ' +
+  'Если просят перевод — только перевод, без пояснений. ' +
+  'ФОРМАТИРОВАНИЕ: не используй ** (жирный) и ### (заголовки) — пиши обычным текстом. ' +
+  'Если нужны разделы — пиши название раздела отдельной строкой, без решёток. ' +
+  'Списки через «- » использовать можно.';
+
+const aiSheet = $('#aiSheet');
+const aiSel = $('#aiSel');
+const aiAnswer = $('#aiAnswer');
+let aiSelection = '';
+
+function openAI(text) {
+  aiSelection = (text || '').trim();
+  if (aiSelection) {
+    aiSel.textContent = '«' + aiSelection.slice(0, 320) + (aiSelection.length > 320 ? '…' : '') + '»';
+    aiSel.classList.remove('hidden');
+    aiAnswer.textContent = 'Нажмите «Объясни» или «Перевод».';
+  } else {
+    aiSel.classList.add('hidden');
+    aiAnswer.textContent = 'Выделите текст в уроке и нажмите «Объясни», либо задайте вопрос ниже.';
+  }
+  $('#aiModelInfo').textContent = 'Модель: ' + (state.settings.model || '—');
+  aiSheet.classList.remove('hidden');
+}
+function closeAI() { aiSheet.classList.add('hidden'); }
+
+function cleanAIText(text) {
+  if (!text) return '';
+  let out = text;
+  // Убираем bold-маркеры **
+  out = out.replace(/\*\*/g, '');
+  // Заголовки #, ##, ### в начале строк — оставляем текст, добавляем перенос
+  out = out.replace(/^#{1,6}[ \t]+(.+)$/gm, (_, title) => '\n' + title.trim() + '\n');
+  // Схлопываем лишние пустые строки
+  out = out.replace(/\n{3,}/g, '\n\n');
+  return out.trim();
+}
+
+async function aiRequest(userContent, maxTokens = 320) {
+  const s = state.settings;
+  if (!s.apiKey) throw new Error('Не задан API-ключ. Откройте ⚙ Настройки.');
+  if (!s.baseUrl) throw new Error('Не задан базовый URL API.');
+  const url = s.baseUrl.replace(/\/+$/, '') + '/chat/completions';
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + s.apiKey },
+    body: JSON.stringify({
+      model: s.model,
+      messages: [ { role: 'system', content: SYSTEM_PROMPT }, { role: 'user', content: userContent } ],
+      temperature: 0.2, max_tokens: maxTokens
+    })
+  });
+  if (!res.ok) {
+    const txt = await res.text().catch(() => '');
+    throw new Error('API ' + res.status + ': ' + txt.slice(0, 180));
+  }
+  const data = await res.json();
+  return (data && data.choices && data.choices[0] && data.choices[0].message &&
+          data.choices[0].message.content || '').trim() || '(пустой ответ)';
+}
+async function runAI(kind) {
+  if (!aiSelection) { toast('Сначала выделите текст'); return; }
+  const q = kind === 'translate'
+    ? 'Переведи на русский:\n"""' + aiSelection + '"""'
+    : 'Объясни простыми словами:\n"""' + aiSelection + '"""';
+  aiAnswer.innerHTML = '<span class="loader"></span>';
+  try {
+    const limit = kind === 'translate' ? 800 : 2000;
+    const raw = await aiRequest(q, limit);
+    aiAnswer.textContent = cleanAIText(raw);
+  } catch (e) {
+    aiAnswer.textContent = '⚠ ' + e.message;
+  }
+  scrollAIToTop();
+}
+
+async function askFree() {
+  const inp = $('#aiAsk');
+  const q = inp.value.trim(); if (!q) return;
+  inp.value = '';
+  const ctx = aiSelection ? '\nКонтекст из дневника: """' + aiSelection + '"""' : '';
+  aiAnswer.innerHTML = '<span class="loader"></span>';
+  try {
+    const raw = await aiRequest(q + ctx, 2000);
+    aiAnswer.textContent = cleanAIText(raw);
+  } catch (e) {
+    aiAnswer.textContent = '⚠ ' + e.message;
+  }
+  scrollAIToTop();
+}
+
+function scrollAIToTop() {
+  const body = aiAnswer.closest('.sheet-body');
+  if (body) body.scrollTop = 0;
+}
+$('#aiClose').onclick = closeAI;
+$('#aiExplain').onclick = () => runAI('explain');
+$('#aiTranslate').onclick = () => runAI('translate');
+$('#aiSend').onclick = askFree;
+$('#aiAsk').addEventListener('keydown', e => { if (e.key === 'Enter') askFree(); });
+aiSheet.addEventListener('click', e => { if (e.target === aiSheet) closeAI(); });
+
+/* ============ Выделение → «Объясни» ============ */
+const chip = $('#chip');
+let pendingText = '';
+function getSelectedText() {
+  const a = document.activeElement;
+  if (a && (a.tagName === 'TEXTAREA' || (a.tagName === 'INPUT' && a.type === 'text'))) {
+    if (a.selectionStart != null && a.selectionEnd > a.selectionStart) {
+      return a.value.slice(a.selectionStart, a.selectionEnd).trim();
+    }
+  }
+  const sel = window.getSelection();
+  return sel ? String(sel).trim() : '';
+}
+function showChipIfSelection() {
+  if (!aiSheet.classList.contains('hidden')) return;
+  const t = getSelectedText();
+  if (t && t.length >= 2 && t.length <= 3000) { pendingText = t; chip.classList.remove('hidden'); }
+  else hideChip();
+}
+function hideChip() { chip.classList.add('hidden'); }
+document.addEventListener('mouseup', () => setTimeout(showChipIfSelection, 10));
+document.addEventListener('touchend', () => setTimeout(showChipIfSelection, 60), { passive: true });
+document.addEventListener('select', () => setTimeout(showChipIfSelection, 30), true);
+document.addEventListener('keyup', e => { if (e.shiftKey || e.key.startsWith('Arrow')) showChipIfSelection(); });
+let chipBusy = false;
+function triggerChip() {
+  if (chipBusy) return;
+  chipBusy = true;
+  hideChip();
+  openAI(pendingText);
+  setTimeout(() => { chipBusy = false; }, 400);
+}
+
+// Десктоп: сохраняем выделение и ждём обычный click
+chip.addEventListener('mousedown', e => e.preventDefault());
+
+// Мобильные: preventDefault на touchstart гасит click — обрабатываем напрямую
+chip.addEventListener('touchstart', e => {
+  e.preventDefault();
+  e.stopPropagation();
+  triggerChip();
+}, { passive: false });
+
+// Гасим touchend, чтобы document-обработчик не показал чип заново
+chip.addEventListener('touchend', e => e.stopPropagation(), { passive: true });
+
+// Fallback для мыши и клавиатуры
+chip.addEventListener('click', triggerChip);
+
+/* ============ Модалки ============ */
+const modalRoot = $('#modal');
+function openModal(title, bodyNode, actions = []) {
+  modalRoot.innerHTML = '';
+  modalRoot.append(
+    el('div', { class: 'modal-backdrop', onclick: closeModal }),
+    el('div', { class: 'modal-box' },
+      el('div', { class: 'modal-head' },
+        el('h3', { text: title }),
+        el('button', { class: 'icon-btn', text: '✕', onclick: closeModal })
+      ),
+      el('div', { class: 'modal-body' }, bodyNode),
+      el('div', { class: 'modal-actions' }, ...actions)
+    )
+  );
+  modalRoot.classList.remove('hidden');
+}
+function closeModal() { modalRoot.classList.add('hidden'); modalRoot.innerHTML = ''; }
+function promptText(title, value, cb) {
+  const inp = el('input', { class: 'input', value: value || '' });
+  const ok = () => { cb(inp.value.trim()); closeModal(); };
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') ok(); });
+  openModal(title, inp, [
+    el('button', { class: 'btn', text: 'Отмена', onclick: closeModal }),
+    el('button', { class: 'btn primary', text: 'Сохранить', onclick: ok })
+  ]);
+  setTimeout(() => { inp.focus(); inp.select(); }, 60);
+}
+
+/* ============ Настройки ============ */
+function openSettings() {
+  const s = state.settings;
+  const base = el('input', { class: 'input', value: s.baseUrl, placeholder: 'https://api.openai.com/v1' });
+  base.oninput = () => { s.baseUrl = base.value.trim(); save(); };
+  const key = el('input', { class: 'input', type: 'password', value: s.apiKey, placeholder: 'sk-…' });
+  key.oninput = () => { s.apiKey = key.value.trim(); save(); };
+  const model = el('input', { class: 'input', value: s.model, placeholder: 'gpt-4o-mini' });
+  model.oninput = () => { s.model = model.value.trim(); save(); };
+  const status = el('div', { class: 'muted small', text: '' });
+  const testBtn = el('button', {
+    class: 'btn', text: 'Проверить связь',
+    onclick: async () => {
+      status.innerHTML = '<span class="loader"></span>';
+      try {
+        const r = await aiRequest('Ответь одним словом: ок', 10);
+        status.textContent = '✅ Связь есть. Ответ: ' + r.slice(0, 60);
+      } catch (e) { status.textContent = '⚠ ' + e.message; }
+    }
+  });
+  const fileImport = el('input', { type: 'file', accept: 'application/json', style: 'display:none' });
+  fileImport.onchange = () => {
+    const f = fileImport.files[0]; if (!f) return;
+    const r = new FileReader();
+    r.onload = () => {
+      try {
+        const data = JSON.parse(r.result);
+        if (!data || !Array.isArray(data.modules)) throw new Error('неверный формат');
+        if (!confirm('Импорт заменит все текущие данные. Продолжить?')) return;
+        state = { modules: data.modules, settings: Object.assign(defaultState().settings, data.settings || {}) };
+        save(); closeModal(); go('home'); toast('Данные импортированы');
+      } catch (e) { toast('Ошибка импорта: ' + e.message); }
+    };
+    r.readAsText(f);
+  };
+  const body = el('div', { class: 'form' },
+    el('div', { class: 'field' }, el('label', { text: 'Базовый URL API (OpenAI-совместимый)' }), base),
+    el('div', { class: 'field' }, el('label', { text: 'API-ключ' }), key),
+    el('div', { class: 'field' }, el('label', { text: 'Модель' }), model),
+    el('div', { class: 'row' }, testBtn), status,
+    el('hr', { style: 'border:none;border-top:1px solid var(--line);margin:6px 0' }),
+    el('div', { class: 'row' },
+      el('button', { class: 'btn', text: '⬇ Экспорт данных',
+        onclick: () => download('lang-diary-backup.json', JSON.stringify(state, null, 2), 'application/json') }),
+      el('button', { class: 'btn', text: '⬆ Импорт данных', onclick: () => fileImport.click() })
+    ),
+    fileImport,
+    el('button', { class: 'btn danger', text: 'Очистить все данные', onclick: () => {
+      if (!confirm('Удалить все модули, уроки и настройки? Действие необратимо.')) return;
+      localStorage.removeItem(LS_KEY); state = defaultState();
+      closeModal(); go('home'); toast('Данные удалены');
+    } }),
+    el('div', { class: 'muted small', text: 'Ключ хранится только в этом браузере (localStorage).' })
+  );
+  openModal('Настройки', body, [el('button', { class: 'btn primary', text: 'Готово', onclick: closeModal })]);
+}
+$('#btnSettings').onclick = openSettings;
+
+/* ============ PWA ============ */
+function makeIcon(size) {
+  const c = document.createElement('canvas');
+  c.width = c.height = size;
+  const g = c.getContext('2d');
+  const grad = g.createLinearGradient(0, 0, size, size);
+  grad.addColorStop(0, '#7c6cf5'); grad.addColorStop(1, '#22c55e');
+  g.fillStyle = grad; g.fillRect(0, 0, size, size);
+  g.fillStyle = '#ffffff';
+  g.font = 'bold ' + Math.round(size * 0.46) + 'px -apple-system,Segoe UI,Roboto,sans-serif';
+  g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText('Я', size / 2, size * 0.54);
+  return c.toDataURL('image/png');
+}
+function initPWA() {
+  const i192 = makeIcon(192), i512 = makeIcon(512);
+  document.getElementById('appleIcon').href = makeIcon(180);
+  const manifest = {
+    name: 'Языковой дневник', short_name: 'Дневник',
+    description: 'Дневник изучения языка с ИИ-помощником',
+    start_url: '.', scope: '.', display: 'standalone', orientation: 'portrait',
+    background_color: '#0e1117', theme_color: '#0e1117', lang: 'ru',
+    icons: [
+      { src: i192, sizes: '192x192', type: 'image/png', purpose: 'any' },
+      { src: i512, sizes: '512x512', type: 'image/png', purpose: 'any' },
+      { src: i512, sizes: '512x512', type: 'image/png', purpose: 'maskable' }
+    ]
+  };
+//   document.getElementById('manifestLink').href =
+//     'data:application/manifest+json;charset=utf-8,' + encodeURIComponent(JSON.stringify(manifest));
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    });
+  }
+}
+let deferredPrompt = null;
+const installBtn = $('#btnInstall');
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault(); deferredPrompt = e; installBtn.classList.remove('hidden');
+});
+installBtn.onclick = async () => {
+  if (!deferredPrompt) { toast('Откройте меню браузера → «Установить приложение»'); return; }
+  deferredPrompt.prompt();
+  try { await deferredPrompt.userChoice; } catch {}
+  deferredPrompt = null; installBtn.classList.add('hidden');
+};
+window.addEventListener('appinstalled', () => { installBtn.classList.add('hidden'); toast('Приложение установлено'); });
+
+/* ============ Старт ============ */
+initPWA();
+go('home');
+</script>
+</body>
+</html>
