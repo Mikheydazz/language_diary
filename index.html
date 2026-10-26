@@ -417,41 +417,49 @@ textarea.vocab-input{
 @keyframes pop{from{opacity:0; transform:translate(-50%,14px)} to{opacity:1; transform:translate(-50%,0)}}
 
 /* ---------- sheet ---------- */
+/* ---------- sheet (AI) ---------- */
 .sheet{
   position:fixed; top:0; left:0; right:0;
-  height:100vh; height:100dvh;
+  height:100vh; height:100dvh; /* dvh для мобильных, vh как запасной */
   z-index:95; background:rgba(0,0,0,.55);
   display:flex; align-items:flex-end; justify-content:center;
   padding-top:env(safe-area-inset-top);
 }
 .sheet-box{
   width:100%; max-width:620px; background:var(--panel); border:1px solid var(--line);
-  border-radius:18px 18px 0 0; max-height:100%; display:flex; flex-direction:column;
-  padding-bottom:env(safe-area-inset-bottom);
-  overflow:hidden;
+  border-radius:18px 18px 0 0; display:flex; flex-direction:column;
+  max-height:100%; overflow:hidden; /* не даём вылезти за экран */
 }
 @media(min-width:881px){
-  .sheet{ align-items:center; padding:16px; }
-  .sheet-box{ border-radius:18px; max-height:90vh; max-height:90dvh; padding-bottom:0; }
+  .sheet{align-items:center; padding:16px;}
+  .sheet-box{border-radius:18px; max-height:90vh; max-height:90dvh;}
 }
-.sheet-head{display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid var(--line)}
-.sheet-body{
-  padding:14px 16px;
-  overflow-y:auto;
-  -webkit-overflow-scrolling:touch;
-  overscroll-behavior:contain;
-  display:flex; flex-direction:column; gap:12px;
-  flex:1 1 auto;
-  min-height:0;
+
+.sheet-head{
+  flex:none; display:flex; align-items:center; justify-content:space-between;
+  padding:14px 16px; border-bottom:1px solid var(--line);
 }
+
+/* НОВАЯ ЗОНА: только она скроллится */
+.sheet-scroll{
+  flex:1 1 auto; min-height:0; /* min-height:0 критически важен для flex */
+  overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain;
+  padding:14px 16px; display:flex; flex-direction:column; gap:12px;
+}
+
+/* НОВАЯ ЗОНА: всегда прижата к низу */
+.sheet-footer{
+  flex:none; padding:12px 16px; border-top:1px solid var(--line);
+  background:var(--panel); padding-bottom:calc(12px + env(safe-area-inset-bottom));
+  display:flex; flex-direction:column; gap:8px;
+}
+
 .ai-sel{
   font-size:14px; color:var(--muted); font-style:italic; background:var(--panel-2);
   border-left:3px solid var(--accent); border-radius:8px; padding:8px 10px; max-height:110px; overflow:auto;
 }
 .ai-answer{
-  white-space:pre-wrap;
-  word-break:break-word;
-  overflow-wrap:anywhere;
+  white-space:pre-wrap; word-break:break-word; overflow-wrap:anywhere;
   font-size:15px; line-height:1.6; background:var(--panel-2);
   border:1px solid var(--line); border-radius:11px; padding:12px; min-height:70px;
 }
@@ -527,13 +535,19 @@ pre.md{
       <strong>ИИ-помощник</strong>
       <button class="icon-btn" id="aiClose">✕</button>
     </div>
-    <div class="sheet-body">
+    
+    <!-- Прокручиваемая зона с ответом -->
+    <div class="sheet-scroll">
       <div class="ai-sel hidden" id="aiSel"></div>
       <div class="row">
         <button class="btn primary" id="aiExplain">Объясни</button>
         <button class="btn" id="aiTranslate">Перевод</button>
       </div>
       <div class="ai-answer" id="aiAnswer">Выделите текст в уроке и нажмите «Объясни».</div>
+    </div>
+
+    <!-- Фиксированная зона с вводом -->
+    <div class="sheet-footer">
       <div class="row">
         <input class="input" id="aiAsk" placeholder="Свой вопрос…" style="flex:1;min-width:150px">
         <button class="btn" id="aiSend">→</button>
@@ -1906,7 +1920,7 @@ async function askFree() {
 }
 
 function scrollAIToTop() {
-  const body = aiAnswer.closest('.sheet-body');
+  const body = document.querySelector('.sheet-scroll');
   if (body) body.scrollTop = 0;
 }
 $('#aiClose').onclick = closeAI;
